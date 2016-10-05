@@ -1,7 +1,7 @@
 <?php
 
 use Tygh\Registry;
-require_once 'platron\PG_Signature.php';
+require_once dirname(__FILE__) . '/platron/PG_Signature.php';
 
 if (!defined('BOOTSTRAP')) { die('Access denied'); }
 
