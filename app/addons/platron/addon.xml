@@ -13,11 +13,13 @@
 		<item lang="ru" id="platron_secret_key">Секректный ключ</item>
 		<item lang="ru" id="platron_lifetime">Время жизни счета</item>
 		<item lang="ru" id="platron_test_mode">Тестовый режим</item>
+		<item lang="ru" id="platron_http_protocol">HTTP протокол</item>
 		
         <item lang="en" id="platron_merchant_id">Merchant ID</item>
 		<item lang="en" id="platron_secret_key">Secret key</item>
 		<item lang="en" id="platron_lifetime">Transaction life time</item>
 		<item lang="en" id="platron_test_mode">Test mode</item>
+		<item lang="en" id="platron_http_protocol">HTTP protocol</item>
     </language_variables>
     
 	<queries>

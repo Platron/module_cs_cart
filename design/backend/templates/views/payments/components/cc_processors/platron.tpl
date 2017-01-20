@@ -31,3 +31,13 @@
         </select>
     </div>
 </div>
+
+<div class="control-group">
+    <label class="control-label" for="platron_http_protocol">{__("platron_http_protocol")}:</label>
+    <div class="controls">
+        <select name="payment_data[processor_params][http_protocol]" id="platron_http_protocol">
+            <option value="http"{if $processor_params.http_protocol == 'http'} selected="selected"{/if}>http</option>
+            <option value="https"{if $processor_params.http_protocol == 'https'} selected="selected"{/if}>https</option>
+        </select>
+    </div>
+</div>
