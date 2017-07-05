@@ -150,10 +150,95 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		$form_fields['pg_user_contact_email'] = $strMaybeEmail;
 	}
 
+	// OFD
+	$form_fields['pg_sig'] = PG_Signature::make('init_payment.php', $form_fields, $processor_data['processor_params']['secret_key']);
+
+	$response = file_get_contents('https://www.platron.ru/init_payment.php?' . http_build_query($form_fields));
+	$responseElement = new SimpleXMLElement($response);
+
+	$checkResponse = PG_Signature::checkXML('init_payment.php', $responseElement, $processor_data['processor_params']['secret_key']);
+
+   	if ($checkResponse && (string)$responseElement->pg_status == 'ok') {
+
+   		if ($processor_data['processor_params']['create_ofd_check'] == 'yes') {
+
+   			$paymentId = (string)$responseElement->pg_payment_id;
+
+   	        $ofdReceiptItems = array();
+   			foreach($arrOrderItems as $arrItem){
+   	            $ofdReceiptItem = new OfdReceiptItem();
+   	            $ofdReceiptItem->label = $arrItem['product'];
+   	            $ofdReceiptItem->amount = round($arrItem['price'] * $arrItem['amount'], 2);
+   	            $ofdReceiptItem->price = round($arrItem['price'], 2);
+   	            $ofdReceiptItem->quantity = $arrItem['amount'];
+   	            $ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'];
+   	            $ofdReceiptItems[] = $ofdReceiptItem;
+       		}
+
+			$shipping = fn_order_shipping_cost($order_info);
+
+   	   		if ($shipping > 0) {
+		        foreach ($order_info['shipping'] as $v) {
+        		    $shipping_name .= $v['shipping'] . ' ';
+		        }
+   				$ofdReceiptItem = new OfdReceiptItem();
+   				$ofdReceiptItem->label = trim($shipping_name);
+   				$ofdReceiptItem->amount = round($shipping, 2);
+   				$ofdReceiptItem->price = round($shipping, 2);
+   				$ofdReceiptItem->quantity = 1;
+   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItems[] = $ofdReceiptItem;
+   	   		}
+
+	        if ($order_info['payment_surcharge'] > 0) {
+   				$ofdReceiptItem = new OfdReceiptItem();
+   				$ofdReceiptItem->label = __('surcharge');
+   				$ofdReceiptItem->amount = round($order_info['payment_surcharge'], 2);
+   				$ofdReceiptItem->price = round($order_info['payment_surcharge'], 2);
+   				$ofdReceiptItem->quantity = 1;
+   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItems[] = $ofdReceiptItem;
+	        }
+/*
+	        if ($order_info['subtotal_discount'] > 0) {
+   				$ofdReceiptItem = new OfdReceiptItem();
+   				$ofdReceiptItem->label = __('discount');;
+   				$ofdReceiptItem->amount = -round($order_info['subtotal_discount'], 2);
+   				$ofdReceiptItem->price = -round($order_info['subtotal_discount'], 2);
+   				$ofdReceiptItem->quantity = 1;
+   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItems[] = $ofdReceiptItem;
+	        }
+*/
+   			$ofdReceiptRequest = new OfdReceiptRequest($processor_data['processor_params']['merchant_id'], $paymentId);
+   			$ofdReceiptRequest->items = $ofdReceiptItems;
+   			$ofdReceiptRequest->sign($processor_data['processor_params']['secret_key']);
+
+   			$responseOfd = file_get_contents('https://www.platron.ru/receipt.php?' . http_build_query($ofdReceiptRequest->requestArray()));
+   			$responseElementOfd = new SimpleXMLElement($responseOfd);
+
+   			if ((string)$responseElementOfd->pg_status != 'ok') {
+				$pp_response = array();
+			    $pp_response['order_status'] = 'F';
+		        $pp_response["reason_text"] = 'Platron create OFD check error. ' . $responseElementOfd->pg_error_description;
+		        fn_finish_payment($order_id, $pp_response);
+				fn_order_placement_routines('route', $order_id, false);
+   			}
+
+   		}
+
+	} else {
+		$pp_response = array();
+	    $pp_response['order_status'] = 'F';
+        $pp_response["reason_text"] = 'Platron init payment error. ' . $responseElement->pg_error_description;
+		fn_finish_payment($order_id, $pp_response);
+		fn_order_placement_routines('route', $order_id, false);
+	}
+
 	$form_fields['pg_sig'] = PG_Signature::make('payment.php', $form_fields, $processor_data['processor_params']['secret_key']);
 
 	fn_change_order_status($order_id, 'O');
-    fn_create_payment_form('https://platron.ru/payment.php', $form_fields, 'Platron pay', false);
+    fn_create_payment_form((string)$responseElement->pg_redirect_url, $form_fields, 'Platron pay', false);
 }
 
 exit;
