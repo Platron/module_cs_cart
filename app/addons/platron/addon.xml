@@ -3,7 +3,7 @@
     <id>platron</id>
     <name>Метод оплаты platron</name>
     <description>Агрегатор платежей platron</description>
-	<version>1.0</version>
+	<version>1.1</version>
     <status>active</status>
 	<update_server>http://platron.ru/info/tech/</update_server>
 	
@@ -14,12 +14,16 @@
 		<item lang="ru" id="platron_lifetime">Время жизни счета</item>
 		<item lang="ru" id="platron_test_mode">Тестовый режим</item>
 		<item lang="ru" id="platron_http_protocol">HTTP протокол</item>
+		<item lang="ru" id="platron_create_ofd_check">Создать чек для ОФД</item>
+		<item lang="ru" id="platron_ofd_vat_type">Тип налога для ОФД</item>
 		
         <item lang="en" id="platron_merchant_id">Merchant ID</item>
 		<item lang="en" id="platron_secret_key">Secret key</item>
 		<item lang="en" id="platron_lifetime">Transaction life time</item>
 		<item lang="en" id="platron_test_mode">Test mode</item>
 		<item lang="en" id="platron_http_protocol">HTTP protocol</item>
+		<item lang="en" id="platron_create_ofd_check">Create OFD check</item>
+		<item lang="en" id="platron_ofd_vat_type">OFD VAT type</item>
     </language_variables>
     
 	<queries>
