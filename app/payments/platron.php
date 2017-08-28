@@ -235,13 +235,8 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		fn_order_placement_routines('route', $order_id, false);
 	}
 
-	$form_fields['pg_sig'] = PG_Signature::make('payment.php', $form_fields, $processor_data['processor_params']['secret_key']);
-
 	fn_change_order_status($order_id, 'O');
-    fn_create_payment_form((string)$responseElement->pg_redirect_url, $form_fields, 'Platron pay', false);
+    fn_create_payment_form((string)$responseElement->pg_redirect_url, array(), '', false, 'get', true);
 }
 
 exit;
-
-
-
