@@ -120,7 +120,6 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		$strDescription .= "; ";
 	}
 
-	$baseUrl = $processor_data['processor_params']['http_protocol'].'://'.$_SERVER['HTTP_HOST'];
 	$form_fields = array(
 		'pg_merchant_id'	=> $processor_data['processor_params']['merchant_id'],
 		'pg_order_id'		=> $order_info['order_id'],
@@ -130,11 +129,11 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		'pg_lifetime'		=> $processor_data['processor_params']['lifetime']*60, // в секундах
 		'pg_testing_mode'	=> ($processor_data['processor_params']['test_mode'] == 'test') ? 1 : 0,
 		'pg_description'	=> mb_substr($strDescription, 0, 255, "UTF-8"),
-		'pg_check_url'		=> $baseUrl.'/index.php?dispatch=payment_notification.check&payment=platron',
-		'pg_result_url'		=> $baseUrl.'/index.php?dispatch=payment_notification.result&payment=platron',
+		'pg_check_url'		=> fn_url('payment_notification.check&payment=platron'),
+		'pg_result_url'		=> fn_url('payment_notification.result&payment=platron'),
 		'pg_request_method'	=> 'GET',
-		'pg_success_url'	=> $baseUrl.'/index.php?dispatch=payment_notification.success&payment=platron',
-		'pg_failure_url'	=> $baseUrl.'/index.php?dispatch=payment_notification.fail&payment=platron',
+		'pg_success_url'	=> fn_url('payment_notification.success&payment=platron'),
+		'pg_failure_url'	=> fn_url('payment_notification.fail&payment=platron'),
 		'pg_salt'			=> rand(21,43433),
 		'cms_payment_module'=> 'CS_CART',		// Параметры безопасности сообщения. Необходима генерация pg_salt и подписи сообщения.
 	);
