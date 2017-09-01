@@ -104,7 +104,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		die();
 		
     } 
-	elseif ($mode == 'success' || $mode == 'failed') {
+	elseif ($mode == 'success' || $mode == 'fail') {
 		fn_order_placement_routines('route', $order_id, false);
     }
 
