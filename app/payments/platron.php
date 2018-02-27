@@ -185,7 +185,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->amount = round($shipping, 2);
    				$ofdReceiptItem->price = round($shipping, 2);
    				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
    				$ofdReceiptItems[] = $ofdReceiptItem;
    	   		}
 
@@ -195,7 +195,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->amount = round($order_info['payment_surcharge'], 2);
    				$ofdReceiptItem->price = round($order_info['payment_surcharge'], 2);
    				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
    				$ofdReceiptItems[] = $ofdReceiptItem;
 	        }
 /*
@@ -205,7 +205,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->amount = -round($order_info['subtotal_discount'], 2);
    				$ofdReceiptItem->price = -round($order_info['subtotal_discount'], 2);
    				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = '18'; // fixed
+   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
    				$ofdReceiptItems[] = $ofdReceiptItem;
 	        }
 */
