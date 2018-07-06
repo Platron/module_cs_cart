@@ -61,6 +61,7 @@
             <option value="18"{if $processor_params.ofd_vat_type == '18'} selected="selected"{/if}>18%</option>
             <option value="110"{if $processor_params.ofd_vat_type == '110'} selected="selected"{/if}>10/110%</option>
             <option value="118"{if $processor_params.ofd_vat_type == '118'} selected="selected"{/if}>18/118%</option>
+            <option value="none"{if $processor_params.ofd_vat_type == 'none'} selected="selected"{/if}>Не облагается</option>
         </select>
     </div>
 </div>
