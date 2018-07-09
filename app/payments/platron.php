@@ -237,7 +237,6 @@ if (defined('PAYMENT_NOTIFICATION')) {
     fn_create_payment_form((string)$responseElement->pg_redirect_url, array(), '', false, 'get', true);
 }
 
-
 function platronCalcDiscountRate($arrOrderItems, $order_info) {
 
 	$discount_rate = 1;
@@ -330,4 +329,3 @@ function platronRebuildItemsArray($arrOrderItems, $discount_correction) {
 
 
 exit;
-
