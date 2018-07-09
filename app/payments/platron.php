@@ -126,7 +126,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
 		'pg_currency'		=> $order_info['secondary_currency'],
 		'pg_language'		=> CART_LANGUAGE,
 		'pg_amount'			=> number_format($order_info['total'], 2, '.', ''),
-		'pg_lifetime'		=> $processor_data['processor_params']['lifetime']*60, // в секундах
+		'pg_lifetime'		=> $processor_data['processor_params']['lifetime'] * 60, // в секундах
 		'pg_testing_mode'	=> ($processor_data['processor_params']['test_mode'] == 'test') ? 1 : 0,
 		'pg_description'	=> mb_substr($strDescription, 0, 255, "UTF-8"),
 		'pg_check_url'		=> fn_url('payment_notification.check&payment=platron'),
@@ -141,10 +141,10 @@ if (defined('PAYMENT_NOTIFICATION')) {
 	$strMaybePhone = (!empty($order_info['b_phone'])) ? $order_info['b_phone'] : @$order_info['phone'];
 	preg_match_all("/\d/", $strMaybePhone, $array);
 	$strPhone = implode('',$array[0]);
-	$form_fields['pg_user_phone'] = $strPhone;	
+	if ($strPhone) $form_fields['pg_user_phone'] = $strPhone;	
 
 	$strMaybeEmail = (!empty($order_info['email'])) ? $order_info['email'] : @$order_info['responsible_email'];
-	if(preg_match('/^.+@.+\..+$/', $strMaybeEmail)){
+	if (preg_match('/^.+@.+\..+$/', $strMaybeEmail)){
 		$form_fields['pg_user_email'] = $strMaybeEmail;
 		$form_fields['pg_user_contact_email'] = $strMaybeEmail;
 	}
@@ -163,12 +163,21 @@ if (defined('PAYMENT_NOTIFICATION')) {
 
    			$paymentId = (string)$responseElement->pg_payment_id;
 
+			// get discount rate - % of discount for every item, i.e. spread order discount between order lines
+			$discount_rate = platronCalcDiscountRate($arrOrderItems, $order_info);	
+
+			// is there difference between items amounts and rounded item prices multiplied by quantity?
+			$discount_correction = platronCalcDiscountCorrection($arrOrderItems, $discount_rate);	
+
+			// get $arrOrderItems with one more line with corrected amount if there is $discount_correction, or just return original $arrOrderItems
+			$itemsGrouped = platronRebuildItemsArray($arrOrderItems, $discount_correction);
+
    	        $ofdReceiptItems = array();
-   			foreach($arrOrderItems as $arrItem){
+   			foreach($itemsGrouped as $arrItem) {
    	            $ofdReceiptItem = new OfdReceiptItem();
    	            $ofdReceiptItem->label = $arrItem['product'];
-   	            $ofdReceiptItem->amount = round($arrItem['price'] * $arrItem['amount'], 2);
-   	            $ofdReceiptItem->price = round($arrItem['price'], 2);
+   	            $ofdReceiptItem->amount = round($arrItem['price'] * $arrItem['amount'] * $discount_rate, 2);
+   	            $ofdReceiptItem->price = round($arrItem['price'] * $discount_rate, 2);
    	            $ofdReceiptItem->quantity = $arrItem['amount'];
    	            $ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'];
    	            $ofdReceiptItems[] = $ofdReceiptItem;
@@ -198,17 +207,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
    				$ofdReceiptItems[] = $ofdReceiptItem;
 	        }
-/*
-	        if ($order_info['subtotal_discount'] > 0) {
-   				$ofdReceiptItem = new OfdReceiptItem();
-   				$ofdReceiptItem->label = __('discount');;
-   				$ofdReceiptItem->amount = -round($order_info['subtotal_discount'], 2);
-   				$ofdReceiptItem->price = -round($order_info['subtotal_discount'], 2);
-   				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
-   				$ofdReceiptItems[] = $ofdReceiptItem;
-	        }
-*/
+
    			$ofdReceiptRequest = new OfdReceiptRequest($processor_data['processor_params']['merchant_id'], $paymentId);
    			$ofdReceiptRequest->items = $ofdReceiptItems;
    			$ofdReceiptRequest->sign($processor_data['processor_params']['secret_key']);
@@ -237,5 +236,96 @@ if (defined('PAYMENT_NOTIFICATION')) {
 	fn_change_order_status($order_id, 'O');
     fn_create_payment_form((string)$responseElement->pg_redirect_url, array(), '', false, 'get', true);
 }
+
+function platronCalcDiscountRate($arrOrderItems, $order_info) {
+
+	$discount_rate = 1;
+	$total_for_goods = 0;			
+
+	foreach($arrOrderItems as $arrItem) {
+		$total_for_goods += $arrItem['price'] * $arrItem['amount'];
+	}
+
+	if ($order_info['subtotal_discount'] > 0) {
+		$discount_rate = ($total_for_goods - $order_info['subtotal_discount']) / $total_for_goods;
+	}
+
+	return $discount_rate;
+
+}
+
+function platronCalcDiscountCorrection($arrOrderItems, $discount_rate) {
+
+	$t1 = 0; $t2 = 0; 
+
+	foreach($arrOrderItems as $arrItem) {
+		$t1 += round($arrItem['price'] * $arrItem['amount'] * $discount_rate, 2);
+		$t2 += round($arrItem['price'] * $discount_rate, 2) * $arrItem['amount'];
+	}
+
+	$discount_correction = round($t2 - $t1, 2);
+
+	return $discount_correction;
+
+}
+
+function platronRebuildItemsArray($arrOrderItems, $discount_correction) {
+
+   	$items = array();
+
+	// split all order items one by one
+	foreach($arrOrderItems as $arrItem) {
+   		if ($arrItem['amount'] > 0) {
+   			for ($i = 1; $i <= $arrItem['amount']; $i++) {
+   				$items[] = array(	'item_id' => $arrItem['item_id'], 
+   									'product' => $arrItem['product'], 
+   									'price' => $arrItem['price']
+   								);
+			}
+   		}
+   	}
+
+   	$itemsGrouped = array();
+   	$i = 0;
+   	$itemsCount = count($items);
+   	$lastItem_id = $items[0]['item_id'];
+   	$curItem = $items[0];
+   	$curItem['amount'] = 0;
+
+	// group order items back by item_id (except one if there is discount correction)
+	foreach($items as $arrItem) {
+
+		if (++$i == $itemsCount and $discount_correction)
+			break;
+
+		if ($arrItem['item_id'] === $lastItem_id) {
+			$curItem['amount']++;
+		} else {
+			$itemsGrouped[] = $curItem; 
+			$curItem = $arrItem;
+			$curItem['amount'] = 1;
+		}
+
+		$lastItem_id = $arrItem['item_id'];
+
+	}
+
+	if ($curItem['amount'])
+		$itemsGrouped[] = $curItem;
+
+	// detach last order item as single OFD line with corrected price if there is discount correction
+	if ($discount_correction) {
+		$lastItem = $items[$itemsCount - 1];
+		$itemsGrouped[] = array('item_id' => $lastItem['item_id'], 
+								'product' => $lastItem['product'], 
+								'price' => $lastItem['price'] - $discount_correction,
+								'amount' => 1
+							);
+	}
+
+	return $itemsGrouped;
+
+}
+
 
 exit;
