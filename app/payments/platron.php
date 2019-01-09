@@ -194,7 +194,8 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->amount = round($shipping, 2);
    				$ofdReceiptItem->price = round($shipping, 2);
    				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
+				$ofdReceiptItem->type = 'service';
+   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 20;
    				$ofdReceiptItems[] = $ofdReceiptItem;
    	   		}
 
@@ -204,7 +205,8 @@ if (defined('PAYMENT_NOTIFICATION')) {
    				$ofdReceiptItem->amount = round($order_info['payment_surcharge'], 2);
    				$ofdReceiptItem->price = round($order_info['payment_surcharge'], 2);
    				$ofdReceiptItem->quantity = 1;
-   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 18;
+				$ofdReceiptItem->type = 'service';
+   				$ofdReceiptItem->vat = $processor_data['processor_params']['ofd_vat_type'] == 'none'? 'none': 20;
    				$ofdReceiptItems[] = $ofdReceiptItem;
 	        }
 
