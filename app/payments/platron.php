@@ -88,10 +88,7 @@ if (defined('PAYMENT_NOTIFICATION')) {
 			}
 		}
 		if(!$bResult)
-			if($arrRequest['pg_can_reject'] == 1)
-				$strResponseStatus = 'rejected';
-			else
-				$strResponseStatus = 'error';
+			$strResponseStatus = 'error';
 
 		$objResponse = new SimpleXMLElement('<?xml version="1.0" encoding="utf-8"?><response/>');
 		$objResponse->addChild('pg_salt', $arrRequest['pg_salt']); // в ответе необходимо указывать тот же pg_salt, что и в запросе
