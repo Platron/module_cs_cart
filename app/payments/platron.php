@@ -245,14 +245,14 @@ function calculatePriceRate($fullAmount, $discountAmount)
 
 function arrangeItemsPricesToDiscountAmount($items, $discountAmount)
 {
-	$fullAmount = calculateOrderItemsTotalAmount($items);
+	$fullAmount = round(calculateOrderItemsTotalAmount($items), 2);
 	if ($fullAmount == $discountAmount) {
 		return $items;
 	}
 
 	$priceRate = calculatePriceRate($fullAmount, $discountAmount);
 	$fixedPriceItems = changeItemsPricesAccordingRate($items, $priceRate);
-	$fullAmount = calculateOrderItemsTotalAmount($fixedPriceItems);
+	$fullAmount = round(calculateOrderItemsTotalAmount($fixedPriceItems), 2);
 	if ($fullAmount == $discountAmount) {
 		return $fixedPriceItems;
 	}
@@ -269,7 +269,7 @@ function arrangeItemsPricesToDiscountAmount($items, $discountAmount)
 	
 	$otherItems = changeItemsPricesAccordingRate($otherItems, $priceRate);
 	$otherItemsFullAmount = calculateOrderItemsTotalAmount($otherItems);
-	$finishItem->price = $discountAmount - $otherItemsFullAmount;
+	$finishItem->price = round($discountAmount - $otherItemsFullAmount, 2);
 	$otherItems[] = $finishItem;
 	return $otherItems;
 }
